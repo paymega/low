@@ -1,0 +1,931 @@
+<html lang="pt"><head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5">
+  <title>Catálogo · Neon Folders</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background-color: #000000;
+      font-family: 'Times New Roman', 'Georgia', serif;
+      color: white;
+      min-height: 100vh;
+      padding: 2rem 1.5rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      scroll-behavior: smooth;
+    }
+
+    .loader {
+      position: fixed;
+      inset: 0;
+      background: #000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      transition: opacity 0.6s ease, visibility 0.6s;
+      pointer-events: none;
+    }
+    .loader.hidden {
+      opacity: 0;
+      visibility: hidden;
+    }
+    .loader span {
+      width: 50px;
+      height: 50px;
+      border: 4px solid #1a1a1a;
+      border-top: 4px solid #b000ff;
+      border-radius: 50%;
+      animation: spin 0.9s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .container {
+      max-width: 1400px;
+      width: 100%;
+    }
+
+    .header-title {
+      text-align: center;
+      font-size: 1.6rem;
+      font-weight: 700;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: #ff1a1a;
+      margin-bottom: 2.8rem;
+      padding-bottom: 0.5rem;
+      font-family: 'Times New Roman', serif;
+      text-shadow: 0 0 20px rgba(255, 26, 26, 0.3);
+      white-space: nowrap;
+    }
+
+    .catalog {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 2rem;
+      margin-top: 0.5rem;
+    }
+
+    .folder-card {
+      background: #0a0a0a;
+      border: 1px solid #1e1e1e;
+      border-radius: 25px;
+      padding: 1.8rem 1.5rem 1.8rem;
+      box-shadow: 0 0 20px rgba(176, 0, 255, 0.2), 0 0 4px rgba(176, 0, 255, 0.1);
+      transition: transform 0.25s ease, box-shadow 0.3s ease, border-color 0.2s;
+      display: flex;
+      flex-direction: column;
+      backdrop-filter: blur(2px);
+      border-color: #2a0a3a;
+    }
+    .folder-card:hover {
+      transform: translateY(-8px);
+      border-color: #b000ff;
+      box-shadow: 0 16px 40px rgba(176, 0, 255, 0.35), 0 0 12px #b000ff66;
+    }
+
+    .folder-name {
+      text-align: center;
+      font-family: 'Times New Roman', 'Georgia', serif;
+      font-size: 1.8rem;
+      font-weight: 600;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: white;
+      margin-bottom: 0.8rem;
+      word-break: break-word;
+      line-height: 1.2;
+    }
+
+    .media-wrapper {
+      width: 100%;
+      border-radius: 18px;
+      overflow: hidden;
+      background: #0d0d0d;
+      margin-bottom: 1.2rem;
+      position: relative;
+      aspect-ratio: 16/9;
+    }
+    .media-wrapper video,
+    .media-wrapper img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      background: #0a0a0a;
+      border-radius: 18px;
+    }
+
+    .info-list {
+      list-style: none;
+      padding: 0.2rem 0 0.8rem 0;
+      margin: 0;
+      flex: 1;
+    }
+    .info-list li {
+      font-family: 'Times New Roman', serif;
+      font-size: 1.2rem;
+      letter-spacing: 0.5px;
+      color: white;
+      padding: 0.2rem 0;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .info-list li::before {
+      content: "•";
+      color: #b000ff;
+      font-size: 1.8rem;
+      line-height: 0.8;
+      margin-right: 6px;
+    }
+
+    .btn-get {
+      background: white;
+      color: black;
+      border: none;
+      border-radius: 60px;
+      padding: 0.5rem 1.3rem;
+      font-family: 'Times New Roman', serif;
+      font-size: 0.9rem;
+      font-weight: 600;
+      letter-spacing: 1.8px;
+      text-transform: uppercase;
+      cursor: pointer;
+      width: fit-content;
+      margin: 0.4rem auto 0;
+      transition: all 0.2s ease;
+      box-shadow: 0 4px 12px rgba(255, 255, 255, 0.06);
+      background: #f0f0f0;
+      border: 1px solid #aaaaaa;
+    }
+    .btn-get:hover {
+      background: white;
+      transform: scale(1.03);
+      box-shadow: 0 0 24px rgba(176, 0, 255, 0.5), 0 0 8px #b000ff;
+      border-color: #b000ff;
+      color: #000;
+    }
+
+    @media screen and (max-width: 992px) {
+      .catalog {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1.5rem;
+      }
+      .header-title {
+        font-size: 1.4rem;
+        letter-spacing: 2px;
+      }
+    }
+
+    @media screen and (max-width: 600px) {
+      body { padding: 1.2rem 0.8rem; }
+      .catalog {
+        grid-template-columns: 1fr;
+        gap: 1.8rem;
+      }
+      .folder-name {
+        font-size: 1.6rem;
+      }
+      .info-list li {
+        font-size: 1rem;
+      }
+      .btn-get {
+        font-size: 0.8rem;
+        padding: 0.4rem 1.1rem;
+        letter-spacing: 1.5px;
+      }
+      .header-title {
+        font-size: 0.75rem;
+        letter-spacing: 1.5px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        padding: 0 0.2rem;
+        margin-bottom: 2rem;
+      }
+    }
+
+    .folder-card {
+      opacity: 0;
+      animation: fadeUp 0.5s forwards;
+    }
+    @keyframes fadeUp {
+      0% { opacity: 0; transform: translateY(20px); }
+      100% { opacity: 1; transform: translateY(0); }
+    }
+    .folder-card:nth-child(1) { animation-delay: 0.02s; }
+    .folder-card:nth-child(2) { animation-delay: 0.04s; }
+    .folder-card:nth-child(3) { animation-delay: 0.06s; }
+    .folder-card:nth-child(4) { animation-delay: 0.08s; }
+    .folder-card:nth-child(5) { animation-delay: 0.10s; }
+    .folder-card:nth-child(6) { animation-delay: 0.12s; }
+    .folder-card:nth-child(7) { animation-delay: 0.14s; }
+    .folder-card:nth-child(8) { animation-delay: 0.16s; }
+    .folder-card:nth-child(9) { animation-delay: 0.18s; }
+    .folder-card:nth-child(10) { animation-delay: 0.20s; }
+    .folder-card:nth-child(11) { animation-delay: 0.22s; }
+    .folder-card:nth-child(12) { animation-delay: 0.24s; }
+    .folder-card:nth-child(13) { animation-delay: 0.26s; }
+  </style>
+</head>
+<body>
+  <div class="loader hidden" id="loader"><span></span></div>
+
+  <div class="container">
+    <div class="header-title">
+      YOU RECEIVE YOUR CONTENT AFTER PAYMENT 
+    </div>
+
+    <div class="catalog" id="catalogContainer">
+            <div class="folder-card" data-folder="FATHER AND DAUGHTER CP" data-price="">
+              <div class="folder-name">FATHER AND DAUGHTER CP</div>
+              
+              <div class="media-wrapper">
+                <video id="vid-0" controls="" muted="" loop="" preload="metadata" playsinline="" loading="lazy">
+                  <source src="https://files.catbox.moe/7dui22.mp4" type="video/mp4">
+                </video>
+              </div>
+            
+              <ul class="info-list"><li>FATHER AND DAUGHTER CP</li><li>OVER 88.9GB+ OF FILES</li><li>OVER 1530+ VIDEOS</li></ul>
+              <button class="btn-get" data-folder="FATHER AND DAUGHTER CP" data-price="">GET-NOW 35$</button>
+            </div>
+          
+            <div class="folder-card" data-folder="BEST CP" data-price="">
+              <div class="folder-name">BEST CP</div>
+              
+              <div class="media-wrapper">
+                <video id="vid-1" controls="" muted="" loop="" preload="metadata" playsinline="" loading="lazy">
+                  <source src="https://files.catbox.moe/yeq6lr.mp4" type="video/mp4">
+                </video>
+              </div>
+            
+              <ul class="info-list"><li>BEST CP</li><li>OVER 178.9GB+ OF FILES</li><li>OVER 9520+ VIDEOS</li></ul>
+              <button class="btn-get" data-folder="BEST CP" data-price="">GET-NOW 40$</button>
+            </div>
+          
+            <div class="folder-card" data-folder="NEW AMELIA BLONDE" data-price="">
+              <div class="folder-name">NEW AMELIA BLONDE</div>
+              
+              <div class="media-wrapper">
+                <video id="vid-2" controls="" muted="" loop="" preload="metadata" playsinline="" loading="lazy">
+                  <source src="https://files.catbox.moe/qyi5p1.mp4" type="video/mp4">
+                </video>
+              </div>
+            
+              <ul class="info-list"><li>NEW AMELIA BLONDE</li><li>OVER 214.7GB+ OF FILES</li><li>OVER 4159+ VIDEOS</li></ul>
+              <button class="btn-get" data-folder="NEW AMELIA BLONDE" data-price="">GET-NOW 35$</button>
+            </div>
+          
+            <div class="folder-card" data-folder="ALL TEENS" data-price="">
+              <div class="folder-name">ALL TEENS</div>
+              
+              <div class="media-wrapper">
+                <img src="https://files.catbox.moe/5y5qny.mp4" alt="ALL TEENS" loading="lazy">
+              </div>
+            
+              <ul class="info-list"><li>ALL TEENS</li><li>OVER 766.5GB+ OF FILES</li><li>OVER 19000+ VIDEOS</li></ul>
+              <button class="btn-get" data-folder="ALL TEENS" data-price="">GET-NOW 90$</button>
+            </div>
+          
+            <div class="folder-card" data-folder="ALL CP" data-price="">
+              <div class="folder-name">ALL CP</div>
+              
+              <div class="media-wrapper">
+                <img src="https://files.catbox.moe/mcnev9.mp4" alt="ALL CP" loading="lazy">
+              </div>
+            
+              <ul class="info-list"><li>ALL CP</li><li>OVER 1TB+ OF FILES</li><li>OVER 12000+ VIDEOS</li></ul>
+              <button class="btn-get" data-folder="ALL CP" data-price="">GET-NOW 90$</button>
+            </div>
+          
+            <div class="folder-card" data-folder="HIGH SCHOOL THOTS" data-price="">
+              <div class="folder-name">HIGH SCHOOL THOTS</div>
+              
+              <div class="media-wrapper">
+                <video id="vid-5" controls="" muted="" loop="" preload="metadata" playsinline="" loading="lazy">
+                  <source src="https://files.catbox.moe/lpwemy.mp4" type="video/mp4">
+                </video>
+              </div>
+            
+              <ul class="info-list"><li>HIGH SCHOOL THOTS</li><li>OVER 59GB+ OF FILES</li><li>OVER 6360+ VIDEOS</li></ul>
+              <button class="btn-get" data-folder="HIGH SCHOOL THOTS" data-price="">GET-NOW 30$</button>
+            </div>
+          
+            <div class="folder-card" data-folder="CP 4-5" data-price="">
+              <div class="folder-name">CP 4-5</div>
+              
+              <div class="media-wrapper">
+                <video id="vid-6" controls="" muted="" loop="" preload="metadata" playsinline="" loading="lazy">
+                  <source src="https://files.catbox.moe/um86ko.mp4" type="video/mp4">
+                </video>
+              </div>
+            
+              <ul class="info-list"><li>CP 4-5</li><li>OVER 95GB+ OF FILES</li><li>OVER 3269+ VIDEOS</li></ul>
+              <button class="btn-get" data-folder="CP 4-5" data-price="">GET-NOW 50$</button>
+            </div>
+          
+            <div class="folder-card" data-folder="TEENS" data-price="">
+              <div class="folder-name">TEENS</div>
+              
+              <div class="media-wrapper">
+                <video id="vid-7" controls="" muted="" loop="" preload="metadata" playsinline="" loading="lazy">
+                  <source src="https://files.catbox.moe/ysz6qq.mp4" type="video/mp4">
+                </video>
+              </div>
+            
+              <ul class="info-list"><li>TEENS</li><li>OVER 98.9GB+ OF FILES</li><li>OVER 4530+ VIDEOS</li></ul>
+              <button class="btn-get" data-folder="TEENS" data-price="">GET-NOW 40$</button>
+            </div>
+          
+            <div class="folder-card" data-folder="FULL TEENS" data-price="">
+              <div class="folder-name">FULL TEENS</div>
+              
+              <div class="media-wrapper">
+                <video id="vid-8" controls="" muted="" loop="" preload="metadata" playsinline="" loading="lazy">
+                  <source src="https://files.catbox.moe/mbchgv.mp4" type="video/mp4">
+                </video>
+              </div>
+            
+              <ul class="info-list"><li>FULL TEENS</li><li>OVER 600GB+ OF FILES</li><li>OVER 13299+ VIDEOS</li></ul>
+              <button class="btn-get" data-folder="FULL TEENS" data-price="">GET-NOW 90$</button>
+            </div>
+          
+            <div class="folder-card" data-folder="TEENS 11-17" data-price="">
+              <div class="folder-name">TEENS 11-17</div>
+              
+              <div class="media-wrapper">
+                <video id="vid-9" controls="" muted="" loop="" preload="metadata" playsinline="" loading="lazy">
+                  <source src="https://files.catbox.moe/f1nfsl.mp4" type="video/mp4">
+                </video>
+              </div>
+            
+              <ul class="info-list"><li>TEENS 11-17</li><li>OVER 118.9GB+ OF FILES</li><li>OVER 4430+ VIDEOS</li></ul>
+              <button class="btn-get" data-folder="TEENS 11-17" data-price="">GET-NOW 45$</button>
+            </div>
+          
+            <div class="folder-card" data-folder="CP PARADISE" data-price="">
+              <div class="folder-name">CP PARADISE</div>
+              
+              <div class="media-wrapper">
+                <video id="vid-10" controls="" muted="" loop="" preload="metadata" playsinline="" loading="lazy">
+                  <source src="https://files.catbox.moe/uocjsb.mp4" type="video/mp4">
+                </video>
+              </div>
+            
+              <ul class="info-list"><li>CP PARADISE</li><li>OVER 76GB+ OF FILES</li><li>OVER 3810+ VIDEOS</li></ul>
+              <button class="btn-get" data-folder="CP PARADISE" data-price="">GET-NOW 55$</button>
+            </div>
+          
+            <div class="folder-card" data-folder="ENGLISH TEEN" data-price="">
+              <div class="folder-name">ENGLISH TEEN</div>
+              
+              <div class="media-wrapper">
+                <video id="vid-11" controls="" muted="" loop="" preload="metadata" playsinline="" loading="lazy">
+                  <source src="https://files.catbox.moe/n8s32m.mp4" type="video/mp4">
+                </video>
+              </div>
+            
+              <ul class="info-list"><li>ENGLISH TEEN</li><li>OVER 38GB+ OF FILES</li><li>OVER 2640+ VIDEOS</li></ul>
+              <button class="btn-get" data-folder="ENGLISH TEEN" data-price="">GET-NOW 30$</button>
+            </div>
+          
+            <div class="folder-card" data-folder="FULL CP" data-price="">
+              <div class="folder-name">FULL CP</div>
+              
+              <div class="media-wrapper">
+                <video id="vid-12" controls="" muted="" loop="" preload="metadata" playsinline="" loading="lazy">
+                  <source src="https://files.catbox.moe/kmybnf.mp4" type="video/mp4">
+                </video>
+              </div>
+            
+              <ul class="info-list"><li>FULL CP</li><li>OVER 977.9GB+ OF FILES</li><li>OVER 15030+ VIDEOS</li></ul>
+              <button class="btn-get" data-folder="FULL CP" data-price="">GET-NOW 90$</button>
+            </div>
+          
+            <div class="folder-card" data-folder="IVANKA " data-price="">
+              <div class="folder-name">IVANKA </div>
+              
+              <div class="media-wrapper">
+                <video id="vid-13" controls="" muted="" loop="" preload="metadata" playsinline="" loading="lazy">
+                  <source src="https://files.catbox.moe/459uqx.mp4" type="video/mp4">
+                </video>
+              </div>
+            
+              <ul class="info-list"><li>IVANKA AND BROTHER</li><li>OVER 11.8GB+ OF FILES</li><li>OVER 650+ VIDEOS</li></ul>
+              <button class="btn-get" data-folder="IVANKA " data-price="">GET-NOW 30$</button>
+            </div>
+          
+            <div class="folder-card" data-folder="DESIRE GARCIA" data-price="">
+              <div class="folder-name">DESIRE GARCIA</div>
+              
+              <div class="media-wrapper">
+                <video id="vid-14" controls="" muted="" loop="" preload="metadata" playsinline="" loading="lazy">
+                  <source src="https://files.catbox.moe/2exe3n.mp4" type="video/mp4">
+                </video>
+              </div>
+            
+              <ul class="info-list"><li>DESIRE GARCIA</li><li>OVER 7GB+ OF FILES</li><li>OVER 401+ VIDEOS</li></ul>
+              <button class="btn-get" data-folder="DESIRE GARCIA" data-price="">GET-NOW 30$</button>
+            </div>
+          
+            <div class="folder-card" data-folder="LIZZY AND BROTHER" data-price="">
+              <div class="folder-name">LIZZY AND BROTHER</div>
+              
+              <div class="media-wrapper">
+                <video id="vid-15" controls="" muted="" loop="" preload="metadata" playsinline="" loading="lazy">
+                  <source src="https://files.catbox.moe/oendpj.mp4" type="video/mp4">
+                </video>
+              </div>
+            
+              <ul class="info-list"><li>LIZZY</li><li>OVER 21GB+ OF FILES</li><li>OVER 960+ VIDEOS</li></ul>
+              <button class="btn-get" data-folder="LIZZY AND BROTHER" data-price="">GET-NOW 30$</button>
+            </div>
+          
+            <div class="folder-card" data-folder="BLACK CP" data-price="">
+              <div class="folder-name">BLACK CP</div>
+              
+              <div class="media-wrapper">
+                <video id="vid-16" controls="" muted="" loop="" preload="metadata" playsinline="" loading="lazy">
+                  <source src="https://files.catbox.moe/n0e5zg.MP4" type="video/mp4">
+                </video>
+              </div>
+            
+              <ul class="info-list"><li>CP BLACK</li><li>OVER 16GB+ OF FILES</li><li>OVER 670+ VIDEOS</li></ul>
+              <button class="btn-get" data-folder="BLACK CP" data-price="">GET-NOW 45$</button>
+            </div>
+          
+            <div class="folder-card" data-folder="PRO CP" data-price="">
+              <div class="folder-name">PRO CP</div>
+              
+              <div class="media-wrapper">
+                <video id="vid-17" controls="" muted="" loop="" preload="metadata" playsinline="" loading="lazy">
+                  <source src="https://files.catbox.moe/yeq6lr.mp4" type="video/mp4">
+                </video>
+              </div>
+            
+              <ul class="info-list"><li>PRO CP</li><li>OVER 15.9GB+ OF FILES</li><li>OVER 330+ VIDEOS</li></ul>
+              <button class="btn-get" data-folder="PRO CP" data-price="">GET-NOW 45$</button>
+            </div>
+          
+            <div class="folder-card" data-folder="NEW CP 1-2" data-price="">
+              <div class="folder-name">NEW CP 1-2</div>
+              
+              <div class="media-wrapper">
+                <video id="vid-18" controls="" muted="" loop="" preload="metadata" playsinline="" loading="lazy">
+                  <source src="https://files.catbox.moe/ndl1cv.mp4" type="video/mp4">
+                </video>
+              </div>
+            
+              <ul class="info-list"><li>NEW CP 1-2</li><li>OVER 13.2GB+ OF FILES</li><li>OVER 490+ VIDEOS</li></ul>
+              <button class="btn-get" data-folder="NEW CP 1-2" data-price="">GET-NOW 30$</button>
+            </div>
+          
+            <div class="folder-card" data-folder="CP GAY" data-price="">
+              <div class="folder-name">CP GAY</div>
+              
+              <div class="media-wrapper">
+                <video id="vid-19" controls="" muted="" loop="" preload="metadata" playsinline="" loading="lazy">
+                  <source src="https://files.catbox.moe/quj5q5.mp4" type="video/mp4">
+                </video>
+              </div>
+            
+              <ul class="info-list"><li>CP GAY</li><li>OVER 16GB+ OF FILES</li><li>OVER 425+ VIDEOS</li></ul>
+              <button class="btn-get" data-folder="CP GAY" data-price="">GET-NOW 45$</button>
+            </div>
+          
+            <div class="folder-card" data-folder="ALL CONTENT" data-price="">
+              <div class="folder-name">ALL CONTENT</div>
+              
+              <div class="media-wrapper">
+                <img src="https://files.catbox.moe/fa4o9e.mp4" alt="ALL CONTENT" loading="lazy">
+              </div>
+            
+              <ul class="info-list"><li>ALL CONTENT</li><li>OVER 12TB+ OF FOLDER</li><li>OVER 100000+ VIDEOS</li></ul>
+              <button class="btn-get" data-folder="ALL CONTENT" data-price="">GET-NOW 90$</button>
+            </div>
+          
+            <div class="folder-card" data-folder="NEW CP 3" data-price="">
+              <div class="folder-name">NEW CP 3</div>
+              
+              <div class="media-wrapper">
+                <video id="vid-21" controls="" muted="" loop="" preload="metadata" playsinline="" loading="lazy">
+                  <source src="https://files.catbox.moe/9dpp7g.mp4" type="video/mp4">
+                </video>
+              </div>
+            
+              <ul class="info-list"><li>NEW CP 3</li><li>OVER 9GB+ OF FILES</li><li>OVER 330+ VIDEOS</li></ul>
+              <button class="btn-get" data-folder="NEW CP 3" data-price="">GET-NOW 35$</button>
+            </div>
+          
+            <div class="folder-card" data-folder="MOM AND SON" data-price="">
+              <div class="folder-name">MOM AND SON</div>
+              
+              <div class="media-wrapper">
+                <video id="vid-22" controls="" muted="" loop="" preload="metadata" playsinline="" loading="lazy">
+                  <source src="https://files.catbox.moe/wsi0x0.mp4" type="video/mp4">
+                </video>
+              </div>
+            
+              <ul class="info-list"><li>MOM AND SON CP</li><li>OVER 20GB+ OF FILES</li><li>OVER 450+ VIDEOS</li></ul>
+              <button class="btn-get" data-folder="MOM AND SON" data-price="">GET-NOW 35$</button>
+            </div>
+          
+            <div class="folder-card" data-folder="PREMUIM CP" data-price="">
+              <div class="folder-name">PREMUIM CP</div>
+              
+              <div class="media-wrapper">
+                <video id="vid-23" controls="" muted="" loop="" preload="metadata" playsinline="" loading="lazy">
+                  <source src="https://files.catbox.moe/405t3c.mp4" type="video/mp4">
+                </video>
+              </div>
+            
+              <ul class="info-list"><li>PREMIUM CP 2026</li><li>OVER 47.5GB+ OF FILES</li><li>OVER 310+ VIDEOS</li></ul>
+              <button class="btn-get" data-folder="PREMUIM CP" data-price="">GET-NOW 50$</button>
+            </div>
+          
+            <div class="folder-card" data-folder="NEW CP" data-price="">
+              <div class="folder-name">NEW CP</div>
+              
+              <div class="media-wrapper">
+                <video id="vid-24" controls="" muted="" loop="" preload="metadata" playsinline="" loading="lazy">
+                  <source src="https://files.catbox.moe/ri0qzn.mp4" type="video/mp4">
+                </video>
+              </div>
+            
+              <ul class="info-list"><li>NEW CP</li><li>OVER 8GB+ OF FILES</li><li>OVER 100+ VIDEOS</li></ul>
+              <button class="btn-get" data-folder="NEW CP" data-price="">GET-NOW 45$</button>
+            </div>
+          </div>
+  </div>
+
+  <script>
+    (function() {
+      const TELEGRAM_LINK = "https://telegram.me/Lowprofiley";
+
+      const folders = [
+         {
+          name: "ALL TEENS",
+          isImage: true,
+          imageSrc: "https://files.catbox.moe/mcnev9.mp4",
+          info: [
+            "ALL TEENS",
+            "OVER 666.5GB+ OF FILES",
+            "OVER 10000+ VIDEOS"
+          ],
+          price: "$90"
+        },
+        {
+          name: "ALL CP",
+          isImage: true,
+          imageSrc: "https://files.catbox.moe/lpwemy.mp4",
+          info: [
+            "ALL CP",
+            "OVER 100GB+ OF FILES",
+            "OVER 1000+ VIDEOS"
+          ],
+          price: "$90"
+        },
+          {
+          name: "ALL CONTENT",
+          isImage: true,
+          imageSrc: "https://files.catbox.moe/fa4o9e.mp4",
+          info: [
+            "ALL CONTENT",
+            "OVER 12.2TB+ OF FOLDER",
+            "OVER 100000+ VIDEOS"
+          ],
+          price: "$120"
+        },
+        {
+          name: "NEW AMELIA BLONDE",
+          isImage: false,
+          videoSrc: "https://files.catbox.moe/5y5qny.mp4",
+          info: [
+            "NEW AMELIA BLONDE",
+            "OVER 14.7GB+ OF FILES",
+            "OVER 459+ VIDEOS"
+          ],
+          price: "$30"
+        },
+        {
+          name: "CP PARADISE",
+          isImage: false,
+          videoSrc: "https://files.catbox.moe/uocjsb.mp4",
+          info: [
+            "CP PARADISE",
+            "OVER 6GB+ OF FILES",
+            "OVER 310+ VIDEOS"
+          ],
+          price: "$35"
+        },
+        {
+          name: "LIZZY AND BROTHER",
+          isImage: false,
+          videoSrc: "https://files.catbox.moe/oendpj.mp4",
+          info: [
+            "LIZZY",
+            "OVER 21GB+ OF FILES",
+            "OVER 960+ VIDEOS"
+          ],
+          price: "$30"
+        },
+        {
+          name: "DESIRE GARCIA",
+          isImage: false,
+          videoSrc: "https://files.catbox.moe/2exe3n.mp4",
+          info: [
+            "DESIRE GARCIA",
+            "OVER 7GB+ OF FILES",
+            "OVER 401+ VIDEOS"
+          ],
+          price: "$30"
+        },
+        {
+          name: "NEW CP",
+          isImage: false,
+          videoSrc: "https://files.catbox.moe/ri0qzn.mp4",
+          info: [
+            "NEW CP",
+            "OVER 2GB+ OF FILES",
+            "OVER 100+ VIDEOS"
+          ],
+          price: "$45"
+        },
+        {
+          name: "BLACK CP",
+          isImage: false,
+          videoSrc: "https://files.catbox.moe/n0e5zg.MP4",
+          info: [
+            "CP BLACK",
+            "OVER 16GB+ OF FILES",
+            "OVER 670+ VIDEOS"
+          ],
+          price: "$45"
+        },
+        {
+          name: "MOM AND SON",
+          isImage: false,
+          videoSrc: "https://files.catbox.moe/wsi0x0.mp4",
+          info: [
+            "MOM AND SON CP",
+            "OVER 20GB+ OF FILES",
+            "OVER 450+ VIDEOS"
+          ],
+          price: "$35"
+        },
+        {
+          name: "IVANKA ",
+          isImage: false,
+          videoSrc: "https://files.catbox.moe/459uqx.mp4",
+          info: [
+            "IVANKA AND BROTHER",
+            "OVER 11.8GB+ OF FILES",
+            "OVER 650+ VIDEOS"
+          ],
+          price: "$30"
+        },
+        {
+          name: "PREMUIM CP",
+          isImage: false,
+          videoSrc: "https://files.catbox.moe/405t3c.mp4",
+          info: [
+            "PREMIUM CP 2026",
+            "OVER 10.5GB+ OF FILES",
+            "OVER 310+ VIDEOS"
+          ],
+          price: "$55"
+        },
+        {
+          name: "BEST CP",
+          isImage: false,
+          videoSrc: "https://files.catbox.moe/yeq6lr.mp4",
+          info: [
+            "BEST CP",
+            "OVER 18.9GB+ OF FILES",
+            "OVER 5430+ VIDEOS"
+          ],
+          price: "$45"
+        },
+        {
+          name: "PRO CP",
+          isImage: false,
+          videoSrc: "https://files.catbox.moe/yeq6lr.mp4",
+          info: [
+            "PRO CP",
+            "OVER 5.9GB+ OF FILES",
+            "OVER 3330+ VIDEOS"
+          ],
+          price: "$40"
+        },
+        {
+          name: "NEW CP 1-2yo",
+          isImage: false,
+          videoSrc: "https://files.catbox.moe/ndl1cv.mp4",
+          info: [
+            "NEW CP 1-2",
+            "OVER 3.2GB+ OF FILES",
+            "OVER 190+ VIDEOS"
+          ],
+          price: "$40"
+        },
+        {
+          name: "NEW CP 3yo",
+          isImage: false,
+          videoSrc: "https://files.catbox.moe/9dpp7g.mp4",
+          info: [
+            "NEW CP 3",
+            "OVER 590GB+ OF FILES",
+            "OVER 3300+ VIDEOS"
+          ],
+          price: "$45"
+        },
+        {
+          name: "TEENS 5-17yo",
+          isImage: false,
+          videoSrc: "https://files.catbox.moe/f1nfsl.mp4",
+          info: [
+            "TEENS 11-17",
+            "OVER 87.9GB+ OF FILES",
+            "OVER 430+ VIDEOS"
+          ],
+          price: "$45"
+        },
+        {
+          name: "FULL CP",
+          isImage: false,
+          videoSrc: "https://files.catbox.moe/kmybnf.mp4",
+          info: [
+            "FULL CP",
+            "OVER 8.9GB+ OF FILES",
+            "OVER 530+ VIDEOS"
+          ],
+          price: "$90"
+        },
+        {
+          name: "CP GAY",
+          isImage: false,
+          videoSrc: "https://files.catbox.moe/quj5q5.mp4",
+          info: [
+            "CP GAY",
+            "OVER 6GB+ OF FILES",
+            "OVER 425+ VIDEOS"
+          ],
+          price: "$40"
+        },
+        {
+          name: "FATHER AND DAUGHTER CP",
+          isImage: false,
+          videoSrc: "https://files.catbox.moe/7dui22.mp4",
+          info: [
+            "FATHER AND DAUGHTER CP",
+            "OVER 8.9GB+ OF FILES",
+            "OVER 530+ VIDEOS"
+          ],
+          price: "$35"
+        },
+        {
+          name: "ENGLISH TEEN",
+          isImage: false,
+          videoSrc: "https://files.catbox.moe/n8s32m.mp4",
+          info: [
+            "ENGLISH TEEN",
+            "OVER 10GB+ OF FILES",
+            "OVER 640+ VIDEOS"
+          ],
+          price: "$30"
+        },
+        {
+          name: "HIGH SCHOOL THOTS",
+          isImage: false,
+          videoSrc: "https://files.catbox.moe/lpwemy.mp4",
+          info: [
+            "HIGH SCHOOL THOTS",
+            "OVER 9GB+ OF FILES",
+            "OVER 360+ VIDEOS"
+          ],
+          price: "$30"
+        },
+        {
+          name: "TEENS",
+          isImage: false,
+          videoSrc: "https://files.catbox.moe/ysz6qq.mp4",
+          info: [
+            "TEENS",
+            "OVER 18.9GB+ OF FILES",
+            "OVER 530+ VIDEOS"
+          ],
+          price: "$40"
+        },
+        {
+          name: "FULL TEENS",
+          isImage: false,
+          videoSrc: "https://files.catbox.moe/mbchgv.mp4",
+          info: [
+            "FULL TEENS",
+            "OVER 6GB+ OF FILES",
+            "OVER 299+ VIDEOS"
+          ],
+          price: "$90"
+        },
+        {
+          name: "CP 2-5yo",
+          isImage: false,
+          videoSrc: "https://files.catbox.moe/ndl1cv.mp4",
+          info: [
+            "CP 4-5",
+            "OVER 5GB+ OF FILES",
+            "OVER 269+ VIDEOS"
+          ],
+          price: "$40"
+        }
+      ];
+
+      function shuffleArray(array) {
+        const arr = [...array];
+        for (let i = arr.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [arr[i], arr[j]] = [arr[j], arr[i]];
+        }
+        return arr;
+      }
+
+      const container = document.getElementById('catalogContainer');
+
+      function renderCards() {
+        const shuffledFolders = shuffleArray(folders);
+        let html = '';
+
+        shuffledFolders.forEach((folder, index) => {
+          const infoItems = folder.info.map(item => `<li>${item}</li>`).join('');
+
+          let mediaHtml = '';
+          if (folder.isImage) {
+            mediaHtml = `
+              <div class="media-wrapper">
+                <img src="${folder.imageSrc}" alt="${folder.name}" loading="lazy">
+              </div>
+            `;
+          } else {
+            mediaHtml = `
+              <div class="media-wrapper">
+                <video 
+                  id="vid-${index}"
+                  controls 
+                  muted 
+                  loop 
+                  preload="metadata"
+                  playsinline
+                  loading="lazy"
+                >
+                  <source src="${folder.videoSrc}" type="video/mp4">
+                  Seu navegador não suporta vídeo.
+                </video>
+              </div>
+            `;
+          }
+
+          html += `
+            <div class="folder-card" data-folder="${folder.name}" data-price="${folder.price}">
+              <div class="folder-name">${folder.name}</div>
+              ${mediaHtml}
+              <ul class="info-list">${infoItems}</ul>
+              <button class="btn-get" data-folder="${folder.name}" data-price="${folder.price}">GET-NOW "${folder.price}" </button>
+            </div>
+          `;
+        });
+
+        container.innerHTML = html;
+      }
+
+      container.addEventListener('click', function(e) {
+        const btn = e.target.closest('.btn-get');
+        if (!btn) return;
+
+        const folderName = btn.getAttribute('data-folder');
+        const price = btn.getAttribute('data-price');
+        if (!folderName) return;
+
+        const message = `HI I WANT BUY: ${folderName}, FOR ${price}, PLEASE SEND PAYMENT METHODS FAST!`;
+        const encoded = encodeURIComponent(message);
+        const telegramLink = `${TELEGRAM_LINK}?text=${encoded}`;
+
+        window.open(telegramLink, '_blank');
+      });
+
+      window.addEventListener('load', function() {
+        const loader = document.getElementById('loader');
+        loader.classList.add('hidden');
+        renderCards();
+      });
+
+    })();
+  </script>
+
+</body></html>
